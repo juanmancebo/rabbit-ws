@@ -12,7 +12,7 @@ pipeline {
         TF_INPUT                    = "0"
         TF_WORK_DIR                 = "terraform"
         TF_DATA_DIR                 = "${TF_WORK_DIR}/.terraform"
-        //ENVIRONMENT                 = "${params.ENVIRONMENT}"
+        ENVIRONMENT                 = "${params.ENVIRONMENT}"
         PRIVATE_KEY_PATH            = "id_dsa_${params.ENVIRONMENT}"
         PUBLIC_DNS_PATH             = "public_dns_${params.ENVIRONMENT}"
         ANSIBLE_HOST_KEY_CHECKING   = "false"
