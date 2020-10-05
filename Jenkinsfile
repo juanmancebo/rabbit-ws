@@ -30,13 +30,18 @@ pipeline {
             steps {
 
                 //sh "echo ENVIRONMENT:${params.Environment}"
-                //sh "env"
+                sh "env"
                 sh 'chmod +x gradlew && ./gradlew clean build -x test --no-daemon'        
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
+                }
             }
         }
         stage('test') {
             steps {
-                sh 'chmod +x gradlew && ./gradlew test --no-daemon'
+                sh 'chmod +x gradlew && ./gradlew clean test --no-daemon'
             }
             post {
                 always {
@@ -133,7 +138,6 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
             archiveArtifacts "${TF_WORK_DIR}/tfplan.txt"
             archiveArtifacts "terraform.tfstate*"
         }
