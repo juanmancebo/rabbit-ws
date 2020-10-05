@@ -41,7 +41,7 @@ pipeline {
         }
         stage('test') {
             steps {
-                sh 'chmod +x gradlew && ./gradlew clean test --no-daemon'
+                sh 'chmod +x gradlew && ./gradlew test --no-daemon'
             }
             post {
                 always {
