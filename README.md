@@ -91,12 +91,13 @@ The application is a simple webservice that connects with RabbitMQ using sockets
 3. Java Application:
    1. It's my first Java application, for sure there are a lot of things to improve. Pull request are very very welcome :)
    2. Keep TCP connection open, instead of opening one connection per user request, and detect when the connection is dead.
-4. Artifacts Management Tools:
-   Nexus
-5. Code quality Tools:   
+4. Artifacts Management Tools: Nexus, Artifactory
+5. Code Quality Tools: SonarQube
 5. Jenkins:
    1. Pipeline:
-      Depending on your organization, it would be better to deacouple this pipeline in two or more, to give granularity in the access to different departments in your organization.
+      1. Depending on your organization, it would be better to deacouple this pipeline in two or more, to give granularity in the access to different departments in your organization.
+      2. Webhook integration with SCM
+      3. Notification integration (Slack, email)
    2. Security:
       1. Installing Jenkins on EC2 gives you the posibility to integrate it with IAM, instead of storing aws API credentials in Jenkins.
       2. [Credentials/keys masking](https://www.jenkins.io/blog/2019/02/21/credentials-masking/)
