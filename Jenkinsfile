@@ -31,17 +31,13 @@ pipeline {
 
                 //sh "echo ENVIRONMENT:${params.Environment}"
                 sh "env"
-                sh 'chmod +x gradlew && ./gradlew clean build -x test --no-daemon'        
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
-                }
+                sh 'chmod +x gradlew && ./gradlew clean build -x test --no-daemon' 
+                stash(name: "jar", includes: 'build/libs/**/*.jar')       
             }
         }
         stage('test') {
             steps {
-                sh 'chmod +x gradlew && ./gradlew test --no-daemon'
+                sh 'chmod +x gradlew && ./gradlew clean test --no-daemon'
             }
             post {
                 always {
@@ -94,14 +90,23 @@ pipeline {
         }
         stage('ansible-deploy') {
             steps {
+                unstash("jar")
                 //sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && echo "ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} terraform/${AN_WORK_DIR}/httpd.yml"'
                 sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ${AN_WORK_DIR}/kubernetes.yml'
                 sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && sed -i "s/127.0.0.1/${PUBLIC_DNS}/g; s/certificate-authority-data:.*/insecure-skip-tls-verify: true/g" ${AN_WORK_DIR}/kube_config.yaml'
                 //sh 'ansible-galaxy collection install community.kubernetes'
                 //sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ${AN_WORK_DIR}/rabbitmq/rabbitmq.yml'
-                sh 'helm repo add ${CHART_PROVIDER} ${CHART_REPO}'
-                sh 'helm install ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml --create-namespace -n ${NAMESPACE}'
                 sh '''#!/bin/bash
+                        ##RabbitMQ setup
+                        if $(helm ls --filter ${CHART_APP_NAME} -n ${NAMESPACE}|wc -l) -gt 1;then
+                            helm upgrade ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml --dry-run
+                            helm upgrade ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml
+                        else
+                            helm repo add ${CHART_PROVIDER} ${CHART_REPO}
+                            helm install ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml --create-namespace -n ${NAMESPACE} --dry-run
+                            helm install ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml --create-namespace -n ${NAMESPACE}
+                        fi
+                        ##Java app setup
                         PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH})
                         source gradle.sh
                         env
@@ -140,6 +145,7 @@ pipeline {
         always {
             archiveArtifacts "${TF_WORK_DIR}/tfplan.txt"
             archiveArtifacts "terraform.tfstate*"
+            archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
         }
     }
 }
