@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'ENVIRONMENT', defaultValue: 'testing', description: 'Workspace/ENVIRONMENT file to use for deployment')
+        string(name: 'Environment', defaultValue: 'testing', description: 'Workspace/ENVIRONMENT file to use for deployment')
         booleanParam(name: 'ApplyAutoApprove', defaultValue: false, description: 'Automatically run apply after generating plan?')
         booleanParam(name: 'DestroyAutoApprove', defaultValue: false, description: 'Automatically run destroy after Ansible deploy?')
     }
@@ -12,32 +12,30 @@ pipeline {
         TF_INPUT                    = "0"
         TF_WORK_DIR                 = "terraform"
         TF_DATA_DIR                 = "${TF_WORK_DIR}/.terraform"
-        //ENVIRONMENT                 = "${params.Environment}"
-        PRIVATE_KEY_PATH            = "id_dsa_${params.ENVIRONMENT}"
-        PUBLIC_DNS_PATH             = "public_dns_${params.ENVIRONMENT}"
+        ENVIRONMENT                 = "${params.Environment}"
+        PRIVATE_KEY_PATH            = "id_dsa_${params.Environment}"
+        PUBLIC_DNS_PATH             = "public_dns_${params.Environment}"
         ANSIBLE_HOST_KEY_CHECKING   = "false"
         NAMESPACE                   = "rabbitmq"
         CHART_PROVIDER              = "bitnami"
         CHART_REPO                  = "https://charts.bitnami.com/bitnami"
         CHART_APP_NAME              = "rabbitmq"
         CHART_VERSION               = "7.6.7"
-        KUBECONFIG                  = "ansible/kube_config.yaml"
+        AN_WORK_DIR                 = "ansible"
+        KUBECONFIG                  = "${AN_WORK_DIR}/kube_config.yaml"
     }
 
     stages {
         stage('build') {
             steps {
-                script{
-                    sh "echo ENVIRONMENT:${params.ENVIRONMENT}"
-                    sh "env"
-                    sh 'chmod +x gradlew && ./gradlew clean build -x test --no-daemon'
-                }
+
+                //sh "echo ENVIRONMENT:${params.Environment}"
+                //sh "env"
+                sh 'chmod +x gradlew && ./gradlew clean build -x test --no-daemon'        
             }
         }
         stage('test') {
             steps {
-                sh "echo ENVIRONMENT:${params.ENVIRONMENT}"
-                sh "env" 
                 sh 'chmod +x gradlew && ./gradlew test --no-daemon'
             }
             post {
@@ -56,7 +54,7 @@ pipeline {
         stage('terraform-plan') {
             steps {
                 script {
-                    currentBuild.displayName = params.ENVIRONMENT
+                    currentBuild.displayName = params.Environment
                 }
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     sh "terraform init ${TF_WORK_DIR}"
@@ -91,19 +89,19 @@ pipeline {
         }
         stage('ansible-deploy') {
             steps {
-                //sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && echo "ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} terraform/ansible/httpd.yml"'
-                sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ansible/kubernetes.yml'
-                sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && sed -i "s/127.0.0.1/${PUBLIC_DNS}/g; s/certificate-authority-data:.*/insecure-skip-tls-verify: true/g" ansible/kube_config.yaml'
+                //sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && echo "ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} terraform/${AN_WORK_DIR}/httpd.yml"'
+                sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ${AN_WORK_DIR}/kubernetes.yml'
+                sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && sed -i "s/127.0.0.1/${PUBLIC_DNS}/g; s/certificate-authority-data:.*/insecure-skip-tls-verify: true/g" ${AN_WORK_DIR}/kube_config.yaml'
                 //sh 'ansible-galaxy collection install community.kubernetes'
-                //sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ansible/rabbitmq/rabbitmq.yml'
+                //sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ${AN_WORK_DIR}/rabbitmq/rabbitmq.yml'
                 sh 'helm repo add ${CHART_PROVIDER} ${CHART_REPO}'
                 sh 'helm install ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml --create-namespace -n ${NAMESPACE}'
                 sh '''#!/bin/bash
                         PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH})
                         source gradle.sh
-                        ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ansible/spring-boot.yml --extra-vars "PUBLIC_DNS=${PUBLIC_DNS}"
+                        ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ${AN_WORK_DIR}/spring-boot.yml --extra-vars "PUBLIC_DNS=${PUBLIC_DNS}"
                    '''              
-                //ansiblePlaybook(installation: 'ansible', inventory: "${PUBLIC_DNS},", playbook: 'terraform/ansible/httpd.yml', extras: "--private-key ${PRIVATE_KEY_PATH}")
+                //ansiblePlaybook(installation: 'ansible', inventory: "${PUBLIC_DNS},", playbook: 'terraform/${AN_WORK_DIR}/httpd.yml', extras: "--private-key ${PRIVATE_KEY_PATH}")
 
 
             }
