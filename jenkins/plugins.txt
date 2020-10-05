@@ -1,0 +1,8 @@
+workflow-aggregator
+pipeline-stage-view
+git
+github-branch-source
+build-timeout
+jdk-tool
+ws-cleanup
+aws-credentials

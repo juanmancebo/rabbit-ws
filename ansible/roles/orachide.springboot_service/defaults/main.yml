@@ -1,0 +1,34 @@
+---
+# defaults file for role_spring_boot_app
+
+# dependencies default var
+sb_app_install_java: true
+sb_app_create_users: true
+sb_java_package: "{{ 'java-1.8.0-openjdk' if (ansible_distribution in ['RedHat','CentOS']) else 'openjdk-8-jdk' }}"
+
+sb_app_state: present
+sb_app_extension: jar
+sb_maven_repository_url: http://repo1.maven.org/maven2
+sb_applications_root_folder: /opt/applis
+sb_app_as_a_service: true
+sb_app_stop_wait_time: 60
+# download maven artifact on ansible host
+sb_local_maven_artifact_dowload: true
+sb_local_maven_artifact_download_temp_folder: /tmp
+sb_app_java_opts_xms: 256M
+sb_app_java_opts_xmx: 1024M
+sb_app_config_file_final_name: application.yml
+
+# initd conf
+sb_initd_pid_folder: "{{ sb_applications_root_folder }}/{{ sb_app_name | upper }}/run"
+sb_initd_log_folder: "{{ sb_applications_root_folder }}/{{ sb_app_name | upper }}/logs"
+sb_initd_log_filename: "{{ sb_app_name }}_out.log"
+
+sb_app_healthcheck_urls_validate_certs: no
+sb_app_healthcheck_urls_retry_count: 10
+sb_app_healthcheck_urls_retry_delay: 6
+
+# HealthCheck TCP Port timeout in seconds
+sb_app_healthcheck_ports_timeout: 60
+
+sb_app_env: []

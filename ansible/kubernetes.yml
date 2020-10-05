@@ -1,0 +1,16 @@
+- hosts: all
+  user: ec2-user
+  become: true
+
+  tasks:
+    - name: Download K3s
+      get_url:
+        url: https://get.k3s.io
+        dest: /tmp/k3s.sh
+    - name: Install K3s
+      command: sh /tmp/k3s.sh
+    - name: Fetch kubeconfig
+      fetch:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: kube_config.yaml
+        flat: yes

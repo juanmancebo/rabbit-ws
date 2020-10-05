@@ -1,0 +1,15 @@
+- hosts: all
+  user: ec2-user
+  become: true
+
+  tasks:
+    - name: Deploy rabbitmq helm chart
+      community.kubernetes.helm:
+        name: rabbitmq
+        binary_path: /usr/local/bin/helm
+        chart_ref: https://charts.bitnami.com/bitnami/rabbitmq-7.6.7.tgz
+        release_namespace: rabbitmq
+        create_namespace: true
+        kubeconfig: ansible/kube_config.yaml
+        atomic: yes
+

@@ -1,0 +1,10 @@
+---
+# handlers file for role_spring_boot_app
+
+- name: "Restart application"
+  service:
+    name: "{{ sb_app_name | lower }}"
+    enabled: yes
+    state: restarted
+  become: true
+  when: sb_app_as_a_service
