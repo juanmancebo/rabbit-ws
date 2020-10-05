@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'Environment', defaultValue: 'testing', description: 'Environment files to use for deployment')
+        string(name: 'ENVIRONMENT', defaultValue: 'testing', description: 'Environment files to use for deployment')
         booleanParam(name: 'ApplyAutoApprove', defaultValue: false, description: 'Automatically run apply after generating plan?')
         booleanParam(name: 'DestroyAutoApprove', defaultValue: false, description: 'Automatically run destroy after Ansible deploy?')
     }
@@ -12,9 +12,9 @@ pipeline {
         TF_INPUT                    = "0"
         TF_WORK_DIR                 = "terraform"
         TF_DATA_DIR                 = "${TF_WORK_DIR}/.terraform"
-        ENVIRONMENT                 = "${params.Environment}"
-        PRIVATE_KEY_PATH            = "id_dsa_${params.Environment}"
-        PUBLIC_DNS_PATH             = "public_dns_${params.Environment}"
+        //ENVIRONMENT                 = "${params.ENVIRONMENT}"
+        PRIVATE_KEY_PATH            = "id_dsa_${params.ENVIRONMENT}"
+        PUBLIC_DNS_PATH             = "public_dns_${params.ENVIRONMENT}"
         ANSIBLE_HOST_KEY_CHECKING   = "false"
         NAMESPACE                   = "rabbitmq"
         CHART_PROVIDER              = "bitnami"
@@ -59,7 +59,7 @@ pipeline {
         stage('terraform-plan') {
             steps {
                 script {
-                    currentBuild.displayName = params.Environment
+                    currentBuild.displayName = params.ENVIRONMENT
                 }
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     sh "terraform init ${TF_WORK_DIR}"
