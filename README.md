@@ -60,8 +60,8 @@ The user can see the resources that will be created/removed before take the deci
 
 Pipeline overview ![Alt Text](docs/images/15.png)
 
- - build: build project complete from scratch (skipping tests)
- - test: unit tests
+ - build: Build project complete from scratch (skipping tests)
+ - test: Unit tests
  - terraform-validate: Terraform configuration files validation.
  - terraform-plan: Generates an execution plan for Terraform.
  - terraform-apply-confirmation: It requests execution confirmation to user.
@@ -79,6 +79,8 @@ amqp.port=30000
 ```
 Note: Other escenarios are not contempled and maybe the application doesn't catch these exepections.
 
+### How the application works?
+The application is a simple 
 
 ## Next steps (production ready)
 * This project is a PoC, so it has a lack of HA and security.
@@ -90,7 +92,10 @@ Note: Other escenarios are not contempled and maybe the application doesn't catc
 3. Java Application:
    1. It's my first Java application, for sure there are a lot of things to improve. Pull request are very very welcome :)
    2. Keep TCP connection open, instead of opening one connection per user request, and detect when the connection is dead.
-4. Jenkins:
+4. Artifacts Management Tools:
+   Nexus 
+5. Code quality Tools:   
+5. Jenkins:
    1. Pipeline:
       Depending on your organization, it would be better to deacouple this pipeline in two or more, to give granularity in the access to different departments in your organization.
    2. Security:
