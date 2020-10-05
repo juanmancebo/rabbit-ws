@@ -66,7 +66,7 @@ Pipeline overview ![Alt Text](docs/images/15.png)
 1. Webservice infraestrucure: ALB + Autoscaling + Multi-AZ deployment
 2. Terraform: Save tfstate in an external/centralized persistence like S3.
 2. RabbitMQ: 
-   1. NLB + Multi-AZ deployment (minimum of 3 replicas) in dedicated Kubernetes cluster. You can easily configure replicacount it in [custom_values.yaml](tabbitmq/custom_values.yaml#L19)
+   1. NLB + Multi-AZ deployment (minimum of 3 replicas) in dedicated Kubernetes cluster. You can easily configure replica count in [custom_values.yaml](tabbitmq/custom_values.yaml#L19)
    2. Helm deployment using [Ansible kubernetes collection](https://docs.ansible.com/ansible/latest/collections/community/kubernetes/helm_module.html) or [Terraform helm provider](https://registry.terraform.io/providers/hashicorp/helm/latest/docs). In my opinion, nowadays both need improvements to have all helm features.
 3. Java Application:
    1. It's my first Java application, for sure there are a lot of things to improve. Pull request are very very welcomed :)
