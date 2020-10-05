@@ -16,7 +16,7 @@ public class Utilities {
         InputStream is = null;
 
         try {
-            String environment = System.getenv("environment");
+            String environment = System.getenv("ENVIRONMENT");
             prop.load(Utilities.class.getClassLoader().getResourceAsStream(environment+".properties"));
         } catch(IOException e) {
             System.out.println(e.toString());

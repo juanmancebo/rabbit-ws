@@ -22,5 +22,5 @@
         - "http://{{ PUBLIC_DNS }}:8080"
       sb_app_env:
         - name: environment
-          value: "{{ environment }}"
+          value: "{{ lookup('env','ENVIRONMENT') }}"
 
