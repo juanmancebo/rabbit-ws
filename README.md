@@ -60,6 +60,25 @@ The user can see the resources that will be created/removed before take the deci
 
 Pipeline overview ![Alt Text](docs/images/15.png)
 
+ - build: build project complete from scratch (skipping tests)
+ - test: unit tests
+ - terraform-validate: Terraform configuration files validation.
+ - terraform-plan: Generates an execution plan for Terraform.
+ - terraform-apply-confirmation: It requests execution confirmation to user.
+ - terraform-apply: If user accepts, it applies the execution of the plan. Setup AWS infraestructure.
+ - ansible-deploy: It deploys Kubernetes, RabbitMQ (on Kubernetes) and Java application (as a service)
+ - terraform-destroy-confirmation: It requests destroy confirmation to user.
+ - terraform-destroy: If user have accepted step before, it applies the destroy of the infraestructure.
+ 
+The easiest way to force the unsucessful connection with RabbitMQ is to run the Jenkins job with the parameter ENVIRONMENT configured to staging i.e.
+This will make the application to read the connection parameters below:
+```
+$cat src/main/resources/staging.properties 
+amqp.host=staging
+amqp.port=30000
+```
+Note: Other escenarios are not contempled and maybe the application doesn't catch these exepections.
+
 
 ## Next steps (production ready)
 * This project is a PoC, so it has a lack of HA and security.
@@ -75,7 +94,7 @@ Pipeline overview ![Alt Text](docs/images/15.png)
    1. Pipeline:
       Depending on your organization, it would be better to deacouple this pipeline in two or more, to give granularity in the access to different departments in your organization.
    2. Security:
-    1. Installing Jenkins on EC2 gives you the posibility to integrate it with IAM, instead of storing aws API credentials in Jenkins.
-    2. [Credentials/keys masking](https://www.jenkins.io/blog/2019/02/21/credentials-masking/)
+      1. Installing Jenkins on EC2 gives you the posibility to integrate it with IAM, instead of storing aws API credentials in Jenkins.
+      2. [Credentials/keys masking](https://www.jenkins.io/blog/2019/02/21/credentials-masking/)
    3. HA:
       If your business requirements demand a [fault-tolerant Jenkins](https://docs.cloudbees.com/docs/cloudbees-ci/latest/traditional-install-guide/high-availability) environment, your preferred setup might be a scenario in which multiple masters with their own workers are placed in separate Availability Zones. 
