@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'Environment', defaultValue: 'testing', description: 'Workspace/environment file to use for deployment')
+        string(name: 'ENVIRONMENT', defaultValue: 'testing', description: 'Workspace/ENVIRONMENT file to use for deployment')
         booleanParam(name: 'ApplyAutoApprove', defaultValue: false, description: 'Automatically run apply after generating plan?')
         booleanParam(name: 'DestroyAutoApprove', defaultValue: false, description: 'Automatically run destroy after Ansible deploy?')
     }
@@ -12,9 +12,9 @@ pipeline {
         TF_INPUT                    = "0"
         TF_WORK_DIR                 = "terraform"
         TF_DATA_DIR                 = "${TF_WORK_DIR}/.terraform"
-        ENVIRONMENT                 = "${params.Environment}"
-        PRIVATE_KEY_PATH            = "id_dsa_${env.ENVIRONMENT}"
-        PUBLIC_DNS_PATH             = "public_dns_${env.ENVIRONMENT}"
+        //ENVIRONMENT                 = "${params.Environment}"
+        PRIVATE_KEY_PATH            = "id_dsa_${params.ENVIRONMENT}"
+        PUBLIC_DNS_PATH             = "public_dns_${params.ENVIRONMENT}"
         ANSIBLE_HOST_KEY_CHECKING   = "false"
         NAMESPACE                   = "rabbitmq"
         CHART_PROVIDER              = "bitnami"
@@ -28,8 +28,7 @@ pipeline {
         stage('build') {
             steps {
                 script{
-                    sh "echo Environment:${params.Environment}"
-                    sh "echo ENVIRONMENT:${env.ENVIRONMENT}"
+                    sh "echo ENVIRONMENT:${params.ENVIRONMENT}"
                     sh "env"
                     sh 'chmod +x gradlew && ./gradlew clean build -x test --no-daemon'
                 }
@@ -37,8 +36,7 @@ pipeline {
         }
         stage('test') {
             steps {
-                sh "echo Environment:${params.Environment}"
-                sh "echo ENVIRONMENT:${env.ENVIRONMENT}"
+                sh "echo ENVIRONMENT:${params.ENVIRONMENT}"
                 sh "env" 
                 sh 'chmod +x gradlew && ./gradlew test --no-daemon'
             }
@@ -58,11 +56,11 @@ pipeline {
         stage('terraform-plan') {
             steps {
                 script {
-                    currentBuild.displayName = params.environment
+                    currentBuild.displayName = params.ENVIRONMENT
                 }
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     sh "terraform init ${TF_WORK_DIR}"
-                    sh "terraform plan -out=${TF_WORK_DIR}/tfplan -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/environments/${environment}.tfvars ${TF_WORK_DIR}"
+                    sh "terraform plan -out=${TF_WORK_DIR}/tfplan -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/ENVIRONMENTs/${ENVIRONMENT}.tfvars ${TF_WORK_DIR}"
                     sh "terraform show -no-color ${TF_WORK_DIR}/tfplan |tee ${TF_WORK_DIR}/tfplan.txt"
                 }
             }
@@ -103,7 +101,7 @@ pipeline {
                 sh '''#!/bin/bash
                         PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH})
                         source gradle.sh
-                        ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ansible/spring-boot.yml --extra-vars "PUBLIC_DNS=${PUBLIC_DNS} environment=${environment}"
+                        ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ansible/spring-boot.yml --extra-vars "PUBLIC_DNS=${PUBLIC_DNS}"
                    '''              
                 //ansiblePlaybook(installation: 'ansible', inventory: "${PUBLIC_DNS},", playbook: 'terraform/ansible/httpd.yml', extras: "--private-key ${PRIVATE_KEY_PATH}")
 
@@ -128,7 +126,7 @@ pipeline {
         stage('terraform-destroy') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                    sh "terraform destroy -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/environments/${environment}.tfvars -auto-approve ${TF_WORK_DIR}"
+                    sh "terraform destroy -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/ENVIRONMENTs/${ENVIRONMENT}.tfvars -auto-approve ${TF_WORK_DIR}"
                 }
             }
         }
