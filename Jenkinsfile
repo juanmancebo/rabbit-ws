@@ -12,7 +12,7 @@ pipeline {
         TF_INPUT                    = "0"
         TF_WORK_DIR                 = "terraform"
         TF_DATA_DIR                 = "${TF_WORK_DIR}/.terraform"
-        ENVIRONMENT                 = "${params.environment}"
+        //ENVIRONMENT                 = "${params.environment}"
         TEST                        = "${params.environment}"
         PRIVATE_KEY_PATH            = "id_dsa_${ENVIRONMENT}"
         PUBLIC_DNS_PATH             = "public_dns_${ENVIRONMENT}"
@@ -33,7 +33,7 @@ pipeline {
         }
         stage('test') {
             steps {
-                sh "echo ENVIRONMENT:${ENVIRONMENT} && env" 
+                sh "echo ENVIRONMENT:${ENVIRONMENT} environment:${environment} && env" 
                 sh 'chmod +x gradlew && ./gradlew test --no-daemon'
             }
             post {
@@ -55,7 +55,7 @@ pipeline {
                     currentBuild.displayName = params.environment
                 }
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                    sh "echo ENVIRONMENT:${ENVIRONMENT} && env" 
+                    sh "echo ENVIRONMENT:${ENVIRONMENT} environment:${environment} && env" 
                     sh "terraform init ${TF_WORK_DIR}"
                     sh "terraform plan -out=${TF_WORK_DIR}/tfplan -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/environments/${ENVIRONMENT}.tfvars ${TF_WORK_DIR}"
                     sh "terraform show -no-color ${TF_WORK_DIR}/tfplan |tee ${TF_WORK_DIR}/tfplan.txt"
