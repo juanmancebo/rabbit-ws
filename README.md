@@ -60,27 +60,26 @@ The user can see the resources that will be created/removed before take the deci
 
 Pipeline overview ![Alt Text](docs/images/15.png)
 
- - build: Build project complete from scratch (skipping tests)
- - test: Unit tests
+ - build: Build project completely from scratch (skipping tests).
+ - test: Unit tests.
  - terraform-validate: Terraform configuration files validation.
  - terraform-plan: Generates an execution plan for Terraform.
- - terraform-apply-confirmation: It requests execution confirmation to user.
- - terraform-apply: If user accepts, it applies the execution of the plan. Setup AWS infraestructure.
- - ansible-deploy: It deploys Kubernetes, RabbitMQ (on Kubernetes) and Java application (as a service)
- - terraform-destroy-confirmation: It requests destroy confirmation to user.
- - terraform-destroy: If user have accepted step before, it applies the destroy of the infraestructure.
+ - terraform-apply-confirmation: Requests an execution confirmation to the user.
+ - terraform-apply: If the user accepts it, it applies the execution plan. AWS IaC deploy.
+ - ansible-deploy: Deploys Kubernetes, RabbitMQ (on Kubernetes) and Java application (as a service).
+ - terraform-destroy-confirmation: Requests a destroy confirmation to the user.
+ - terraform-destroy: If the user accepts it, it applies the destroy of the infrastructure.
  
 The easiest way to force the unsucessful connection with RabbitMQ is to run the Jenkins job with the parameter ENVIRONMENT configured to staging i.e.
-This will make the application to read the connection parameters below:
+This will make the application to read the below connection parameters:
 ```
 $cat src/main/resources/staging.properties 
 amqp.host=staging
 amqp.port=30000
 ```
-Note: Other escenarios are not contempled and maybe the application doesn't catch these exepections.
 
 ### How the application works?
-The application is a simple 
+The application is a simple webservice that connects with RabbitMQ using sockets. If the connection returns AMQP headers, it means that RabbitMQ is listening and accepting connections. The Kubernetes installation also has a readiness probe; so if the RabbitMQ process stops in some pod, Kubernetes will discard the traffic for this pod. If all pods fail, it will appear a connection reset and the webservice will detect it.
 
 ## Next steps (production ready)
 * This project is a PoC, so it has a lack of HA and security.
@@ -93,7 +92,7 @@ The application is a simple
    1. It's my first Java application, for sure there are a lot of things to improve. Pull request are very very welcome :)
    2. Keep TCP connection open, instead of opening one connection per user request, and detect when the connection is dead.
 4. Artifacts Management Tools:
-   Nexus 
+   Nexus
 5. Code quality Tools:   
 5. Jenkins:
    1. Pipeline:
