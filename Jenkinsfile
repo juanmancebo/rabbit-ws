@@ -98,9 +98,14 @@ pipeline {
                 //sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ${AN_WORK_DIR}/rabbitmq/rabbitmq.yml'
                 sh '''#!/bin/bash
                         ##RabbitMQ setup
-                        if $(helm ls --filter ${CHART_APP_NAME} -n ${NAMESPACE}|wc -l) -gt 1;then
-                            helm upgrade ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml --dry-run
-                            helm upgrade ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml
+                        helm ls -A
+                        CHECK_LAST_DEPLOY=$(helm ls --filter ${CHART_APP_NAME} -n ${NAMESPACE})
+                        if [ $(echo "${CHECK_LAST_DEPLOY}"|wc -l) -gt 1 ];then
+                            echo -e "There is already a deployment with this name:\n${CHECK_LAST_DEPLOY}"
+                            helm upgrade -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -n ${NAMESPACE} --dry-run
+                            export RABBITMQ_PASSWORD=$(kubectl get secret --namespace ${NAMESPACE} rabbitmq -o jsonpath="{.data.rabbitmq-password}" | base64 --decode)
+                            export RABBITMQ_ERLANG_COOKIE=$(kubectl get secret --namespace ${NAMESPACE} rabbitmq -o jsonpath="{.data.rabbitmq-erlang-cookie}" | base64 --decode)
+                            helm upgrade -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml --set auth.password=$RABBITMQ_PASSWORD --set auth.erlangCookie=$RABBITMQ_ERLANG_COOKIE ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -n ${NAMESPACE}
                         else
                             helm repo add ${CHART_PROVIDER} ${CHART_REPO}
                             helm install ${CHART_APP_NAME} ${CHART_PROVIDER}/${CHART_APP_NAME} -f rabbitmq/default_values.yaml -f rabbitmq/custom_values.yaml --create-namespace -n ${NAMESPACE} --dry-run

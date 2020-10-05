@@ -17,5 +17,10 @@ curl -fsSL -o /tmp/get_helm.sh https://raw.githubusercontent.com/helm/helm/maste
 chmod 700 /tmp/get_helm.sh
 /tmp/get_helm.sh
 
+##kubectl installation
+curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x ./kubectl
+mv ./kubectl /usr/local/bin/kubectl
+
 ##Jenkins plugins installation
 /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
