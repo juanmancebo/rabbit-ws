@@ -21,7 +21,7 @@ The main directories/files are:
 
 ## Requirements: 
  - docker
- - AWS API credentials and permissions for create ec2:* resources in eu-west-1. The minimum instance type required is t2.small.
+ - AWS API credentials and permissions to create ec2:* resources in eu-west-1. The minimum instance type required is t2.small.
 
 
 
@@ -56,7 +56,7 @@ Jenkins -> rabbit-ws -> Build Now ![Alt Text](docs/images/10.png)
 
 Pipeline manual action required in terraform-apply and terraform-destroy ![Alt Text](docs/images/13.png)
 
-User can see the resources that will be created/removed before take the decision to continue or abort ![Alt Text](docs/images/14.png)
+The user can see the resources that will be created/removed before take the decision to continue or abort ![Alt Text](docs/images/14.png)
 
 Pipeline overview ![Alt Text](docs/images/15.png)
 
@@ -69,8 +69,8 @@ Pipeline overview ![Alt Text](docs/images/15.png)
    1. NLB + Multi-AZ deployment (minimum of 3 replicas) in dedicated Kubernetes cluster. You can easily configure replica count in [custom_values.yaml](tabbitmq/custom_values.yaml#L19)
    2. Helm deployment using [Ansible kubernetes collection](https://docs.ansible.com/ansible/latest/collections/community/kubernetes/helm_module.html) or [Terraform helm provider](https://registry.terraform.io/providers/hashicorp/helm/latest/docs). In my opinion, nowadays both need improvements to have all helm features.
 3. Java Application:
-   1. It's my first Java application, for sure there are a lot of things to improve. Pull request are very very welcomed :)
-   2. Keep TCP connection open, instead of open one connection per user request, and detect when the connection is dead.
+   1. It's my first Java application, for sure there are a lot of things to improve. Pull request are very very welcome :)
+   2. Keep TCP connection open, instead of opening one connection per user request, and detect when the connection is dead.
 4. Jenkins:
    1. Pipeline:
       Depending on your organization, it would be better to deacouple this pipeline in two or more, to give granularity in the access to different departments in your organization.

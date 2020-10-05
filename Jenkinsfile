@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'Environment', defaultValue: 'testing', description: 'Workspace/ENVIRONMENT file to use for deployment')
+        string(name: 'Environment', defaultValue: 'testing', description: 'Environment files to use for deployment')
         booleanParam(name: 'ApplyAutoApprove', defaultValue: false, description: 'Automatically run apply after generating plan?')
         booleanParam(name: 'DestroyAutoApprove', defaultValue: false, description: 'Automatically run destroy after Ansible deploy?')
     }
