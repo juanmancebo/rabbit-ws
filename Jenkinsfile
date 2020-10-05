@@ -58,7 +58,7 @@ pipeline {
                 }
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     sh "terraform init ${TF_WORK_DIR}"
-                    sh "terraform plan -out=${TF_WORK_DIR}/tfplan -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/ENVIRONMENTs/${ENVIRONMENT}.tfvars ${TF_WORK_DIR}"
+                    sh "terraform plan -out=${TF_WORK_DIR}/tfplan -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/environments/${ENVIRONMENT}.tfvars ${TF_WORK_DIR}"
                     sh "terraform show -no-color ${TF_WORK_DIR}/tfplan |tee ${TF_WORK_DIR}/tfplan.txt"
                 }
             }
@@ -99,6 +99,7 @@ pipeline {
                 sh '''#!/bin/bash
                         PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH})
                         source gradle.sh
+                        env
                         ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ${AN_WORK_DIR}/spring-boot.yml --extra-vars "PUBLIC_DNS=${PUBLIC_DNS}"
                    '''              
                 //ansiblePlaybook(installation: 'ansible', inventory: "${PUBLIC_DNS},", playbook: 'terraform/${AN_WORK_DIR}/httpd.yml', extras: "--private-key ${PRIVATE_KEY_PATH}")
@@ -124,7 +125,7 @@ pipeline {
         stage('terraform-destroy') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                    sh "terraform destroy -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/ENVIRONMENTs/${ENVIRONMENT}.tfvars -auto-approve ${TF_WORK_DIR}"
+                    sh "terraform destroy -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/environments/${ENVIRONMENT}.tfvars -auto-approve ${TF_WORK_DIR}"
                 }
             }
         }
