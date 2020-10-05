@@ -12,7 +12,8 @@ pipeline {
         TF_INPUT                    = "0"
         TF_WORK_DIR                 = "terraform"
         TF_DATA_DIR                 = "${TF_WORK_DIR}/.terraform"
-        ENVIRONMENT 	            = "${params.environment}"
+        ENVIRONMENT                 = "${params.environment}"
+        TEST                        = "${params.environment}"
         PRIVATE_KEY_PATH            = "id_dsa_${ENVIRONMENT}"
         PUBLIC_DNS_PATH             = "public_dns_${ENVIRONMENT}"
         ANSIBLE_HOST_KEY_CHECKING   = "false"
@@ -32,13 +33,14 @@ pipeline {
         }
         stage('test') {
             steps {
+                sh "echo ENVIRONMENT:${ENVIRONMENT} && env" 
                 sh 'chmod +x gradlew && ./gradlew test --no-daemon'
             }
-		    post {
-		        always {
-		            junit 'build/test-results/**/*.xml'
-		        }
-		    }
+            post {
+                always {
+                    junit 'build/test-results/**/*.xml'
+                }
+            }
         }
 
         stage('terraform-validate') {
@@ -53,6 +55,7 @@ pipeline {
                     currentBuild.displayName = params.environment
                 }
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    sh "echo ENVIRONMENT:${ENVIRONMENT} && env" 
                     sh "terraform init ${TF_WORK_DIR}"
                     sh "terraform plan -out=${TF_WORK_DIR}/tfplan -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/environments/${ENVIRONMENT}.tfvars ${TF_WORK_DIR}"
                     sh "terraform show -no-color ${TF_WORK_DIR}/tfplan |tee ${TF_WORK_DIR}/tfplan.txt"
@@ -77,16 +80,17 @@ pipeline {
 
         stage('terraform-apply') {
             steps {
-            	withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                	sh "terraform apply ${TF_WORK_DIR}/tfplan"
-                	sh "terraform show -no-color |tee terraform.tfstate.txt"
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    sh "terraform apply ${TF_WORK_DIR}/tfplan"
+                    sh "terraform show -no-color |tee terraform.tfstate.txt"
                 }
             }
         }
         stage('ansible-deploy') {
             steps {
-            	//sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && echo "ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} terraform/ansible/httpd.yml"'
-            	sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ansible/kubernetes.yml'
+                sh "echo ENVIRONMENT:${ENVIRONMENT} && env" 
+                //sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && echo "ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} terraform/ansible/httpd.yml"'
+                sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ansible/kubernetes.yml'
                 sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && sed -i "s/127.0.0.1/${PUBLIC_DNS}/g; s/certificate-authority-data:.*/insecure-skip-tls-verify: true/g" ansible/kube_config.yaml'
                 //sh 'ansible-galaxy collection install community.kubernetes'
                 //sh 'PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH}) && ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ansible/rabbitmq/rabbitmq.yml'
@@ -96,7 +100,7 @@ pipeline {
                         PUBLIC_DNS=$(cat ${PUBLIC_DNS_PATH})
                         source gradle.sh
                         ansible-playbook -i ${PUBLIC_DNS}, --private-key ${PRIVATE_KEY_PATH} ansible/spring-boot.yml --extra-vars "PUBLIC_DNS=${PUBLIC_DNS} ENVIRONMENT=${environment}"
-                   '''            	
+                   '''              
                 //ansiblePlaybook(installation: 'ansible', inventory: "${PUBLIC_DNS},", playbook: 'terraform/ansible/httpd.yml', extras: "--private-key ${PRIVATE_KEY_PATH}")
 
 
@@ -119,16 +123,16 @@ pipeline {
         }
         stage('terraform-destroy') {
             steps {
-            	withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-            		sh "terraform destroy -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/environments/${ENVIRONMENT}.tfvars -auto-approve ${TF_WORK_DIR}"
-            	}
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    sh "terraform destroy -var=private_key_path=${PRIVATE_KEY_PATH} -var=public_dns_path=${PUBLIC_DNS_PATH} -var-file=${TF_WORK_DIR}/environments/${ENVIRONMENT}.tfvars -auto-approve ${TF_WORK_DIR}"
+                }
             }
         }
     }
 
     post {
         always {
-        	archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
+            archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
             archiveArtifacts "${TF_WORK_DIR}/tfplan.txt"
             archiveArtifacts "terraform.tfstate*"
         }
